@@ -38,7 +38,7 @@ class Program
     public static string PerformMigration(string content)
     {
         content = Regex.Replace(content, @"using Moq;", "using NSubstitute;");
-        content = Regex.Replace(content, @"^using Moq*;", "", RegexOptions.Multiline);
+        content = Regex.Replace(content, @"using Moq.*?;", "");
 
         content = Regex.Replace(content, @"new Mock<(.+?)>\((.*?)\)", "Substitute.For<$1>($2)");
         content = Regex.Replace(content, @"\bMock<(.+?)>", "$1");
@@ -75,7 +75,7 @@ class Program
             string csprojContent = File.ReadAllText(csprojFile);
 
             // Update references from Moq to NSubstitute
-            csprojContent = Regex.Replace(csprojContent, @"<PackageReference Include=""Moq(.+?)"".*?>.*?/>", $@"<PackageReference Include=""NSubstitute"" Version=""{nsubstituteVersion}"" />", RegexOptions.Singleline);
+            csprojContent = Regex.Replace(csprojContent, @"<PackageReference Include=""Moq(.+?)"".*? />", $@"<PackageReference Include=""NSubstitute"" Version=""{nsubstituteVersion}"" />");
 
             File.WriteAllText(csprojFile, csprojContent);
         }
