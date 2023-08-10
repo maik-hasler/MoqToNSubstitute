@@ -75,7 +75,7 @@ class Program
             string csprojContent = File.ReadAllText(csprojFile);
 
             // Update references from Moq to NSubstitute
-            csprojContent = Regex.Replace(csprojContent, @"<PackageReference Include=""Moq(.+?)"".*?>.*?</PackageReference>", $@"<PackageReference Include=""NSubstitute"" Version=""{nsubstituteVersion}"" />", RegexOptions.Singleline);
+            csprojContent = Regex.Replace(csprojContent, @"<PackageReference Include=""Moq(.+?)"".*?>.*?/>", $@"<PackageReference Include=""NSubstitute"" Version=""{nsubstituteVersion}"" />", RegexOptions.Singleline);
 
             File.WriteAllText(csprojFile, csprojContent);
         }
