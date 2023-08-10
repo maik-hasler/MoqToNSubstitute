@@ -1,35 +1,36 @@
 ﻿using System.Text.RegularExpressions;
 
-public class Program
-{
-    public static void Main(string[] args)
-    {
-        if (args.Length != 1)
-        {
-            Console.WriteLine("Please provide a test directory path as an argument.");
+namespace MoqToNSubstitute;
 
+class Program
+{
+    static void Main(string[] args)
+    {
+        if (args.Length != 2)
+        {
+            Console.WriteLine("Usage: NSubstituteMigrationTool <testDirectory> <nsubstituteVersion>");
             return;
         }
 
-        var testDirectory = args[0];
+        string testDirectory = args[0];
+        string nsubstituteVersion = args[1];
 
         if (!Directory.Exists(testDirectory))
         {
             Console.WriteLine("The specified directory does not exist.");
-
             return;
         }
 
-        var files = Directory.GetFiles(testDirectory, "*.cs", SearchOption.AllDirectories);
+        string[] files = Directory.GetFiles(testDirectory, "*.cs", SearchOption.AllDirectories);
 
         foreach (string file in files)
         {
-            var fileContent = File.ReadAllText(file);
-
+            string fileContent = File.ReadAllText(file);
             fileContent = PerformMigration(fileContent);
-
             File.WriteAllText(file, fileContent);
         }
+
+        UpdateCsProjFiles(testDirectory, nsubstituteVersion);
 
         Console.WriteLine("Migration completed successfully.");
     }
@@ -37,6 +38,7 @@ public class Program
     public static string PerformMigration(string content)
     {
         content = Regex.Replace(content, @"using Moq;", "using NSubstitute;");
+        content = Regex.Replace(content, @"^using Moq*;", "", RegexOptions.Multiline);
 
         content = Regex.Replace(content, @"new Mock<(.+?)>\((.*?)\)", "Substitute.For<$1>($2)");
         content = Regex.Replace(content, @"\bMock<(.+?)>", "$1");
@@ -59,6 +61,27 @@ public class Program
 
         content = Regex.Replace(content, @"\.GetMock<(.+?)>\(\)", ".Get<$1>()");
 
+        content = Regex.Replace(content, @"\.Object", "");
+
         return content;
+    }
+
+    static void UpdateCsProjFiles(string directory, string nsubstituteVersion)
+    {
+        string[] csprojFiles = Directory.GetFiles(directory, "*.csproj", SearchOption.AllDirectories);
+
+        foreach (string csprojFile in csprojFiles)
+        {
+            string csprojContent = File.ReadAllText(csprojFile);
+
+            // Remove references to Moq
+            csprojContent = Regex.Replace(csprojContent, @"<Reference Include=""Moq(.+?)"".*?>.*?</Reference>", "", RegexOptions.Singleline);
+
+            // Add reference to NSubstitute
+            string nsubstituteReference = $@"<PackageReference Include=""NSubstitute"" Version=""{nsubstituteVersion}"" />";
+            csprojContent = Regex.Replace(csprojContent, @"<\/ItemGroup>\s*<\/Project>", $@"    {nsubstituteReference}{Environment.NewLine}  </ItemGroup>{Environment.NewLine}</Project>", RegexOptions.Singleline);
+
+            File.WriteAllText(csprojFile, csprojContent);
+        }
     }
 }
