@@ -8,7 +8,7 @@ class Program
     {
         if (args.Length != 2)
         {
-            Console.WriteLine("Usage: NSubstituteMigrationTool <testDirectory> <nsubstituteVersion>");
+            Console.WriteLine("Usage: MoqToNSubstitute.exe <testDirectory> <nsubstituteVersion>");
             return;
         }
 
@@ -61,7 +61,7 @@ class Program
 
         content = Regex.Replace(content, @"\.GetMock<(.+?)>\(\)", ".Get<$1>()");
 
-        content = Regex.Replace(content, @"\.Object", "");
+        content = Regex.Replace(content, @"\b\.Object\b", "");
 
         return content;
     }
